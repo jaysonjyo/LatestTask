@@ -4,10 +4,10 @@ import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/usecases/sign_in.dart';
 class Gateway {
   final Dio dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 20)));
-  final String baseUrl = 'https://frijo.noviindus.in/api/otp_verified';
+  final String baseUrl = 'https://frijo.noviindus.in/api';
 
   // auth dependencies
-  late final authRemote = AuthRemoteDataSourceImpl(dio, baseUrl: "baseUrl");
+  late final authRemote = AuthRemoteDataSourceImpl(dio, baseUrl:baseUrl);
   late final authRepo = AuthRepositoryImpl(authRemote);
   late final signIn = SignIn(authRepo);
 

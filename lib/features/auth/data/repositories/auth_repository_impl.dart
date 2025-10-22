@@ -6,7 +6,7 @@ import '../../../../core/utils/result.dart';
 import '../../domain/entities/auth_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_ds.dart';
-
+import '../models/auth_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remote;
@@ -18,6 +18,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phone,
   }) async {
     try {
+      //
       final model = await remote.signIn(
         countryCode: countryCode,
         phone: phone,

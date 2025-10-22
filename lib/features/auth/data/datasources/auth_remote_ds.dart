@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../../../core/error/auth_model.dart';
+import '../models/auth_model.dart';
 
 
 abstract class AuthRemoteDataSource {
@@ -9,7 +9,6 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final Dio dio;
   final String baseUrl;
-
   AuthRemoteDataSourceImpl(this.dio, {required this.baseUrl});
 
   @override
