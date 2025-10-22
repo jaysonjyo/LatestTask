@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart'; // ✅ add this // ✅ your provider
 import '../features/auth/presentation/providers/auth_provider.dart';
 import 'home_screen.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 class MobileNumberScreen extends StatefulWidget {
   const MobileNumberScreen({Key? key}) : super(key: key);
 
@@ -202,7 +202,7 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
 
                       // ✅ Continue Button (uses provider)
                       Center(
-                        child: InkWell(
+                        child: InkWell(borderRadius: BorderRadius.circular(40),
                           onTap: () async {
                             final code = '+${_selectedCountry?.phoneCode ?? "91"}';
                             final phone = phoneController.text.trim();
@@ -219,11 +219,17 @@ class _MobileNumberScreenState extends State<MobileNumberScreen> {
                             await auth.signIn(code, phone);
 
                             if (auth.status == AuthStatus.success) {
-
+                              final token = auth.token;
+                              if (token != null) {
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('access_token', token); // ✅ save token
+                              }
                               if (context.mounted) {
+
+
                                 Navigator.of(context).pushReplacement(
                                   MaterialPageRoute(
-                                      builder: (_) => const HomeScreen()),
+                                      builder: (_) =>  HomeScreen(token:token ,)),
                                 );
                               }
                             } else if (auth.status == AuthStatus.failure) {

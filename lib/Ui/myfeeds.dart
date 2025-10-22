@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:readmore/readmore.dart';
+import 'package:provider/provider.dart';
+import '../features/my_feeds/presentation/providers/my_feed_provider.dart';
 
 class Myfeeds extends StatefulWidget {
-  const Myfeeds({Key? key}) : super(key: key);
+  final String? token;
+
+  const Myfeeds({super.key, this.token});
 
   @override
   State<Myfeeds> createState() => _MyfeedsState();
@@ -13,39 +18,19 @@ class Myfeeds extends StatefulWidget {
 
 class _MyfeedsState extends State<Myfeeds> {
   int? _playingIndex;
-  final List<Map<String, dynamic>> posts = [
-    {
-      "name": "Anagha Krishna",
-      "time": "5 days ago",
-      "video":
-      "https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4",
-      "thumbnail":
-      "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?auto=format&fit=crop&w=800&q=80",
-      "description":
-      "Lorem ipsum dolor sit amet consectetur. Leo ac lorem faucibus facilisi tellus. At vitae dis commodo nunc sollicitudin elementum suspendisse...",
-    },
-    {
-      "name": "Gokul Krishna",
-      "time": "5 days ago",
-      "video": "https://samplelib.com/lib/preview/mp4/sample-5s.mp4",
-      "thumbnail":
-      "https://images.unsplash.com/photo-1607746882042-944635dfe10e?auto=format&fit=crop&w=800&q=80",
-      "description":
-      "Lorem ipsum dolor sit amet consectetur. Leo ac lorem faucibus facilisi tellus. At vitae dis commodo nunc sollicitudin elementum suspendisse...",
-    },
-  ];
-
   final List<VideoPlayerController> _videoControllers = [];
   final List<ChewieController?> _chewieControllers = [];
 
   @override
   void initState() {
     super.initState();
-    for (var post in posts) {
-      final controller = VideoPlayerController.network(post["video"]);
-      _videoControllers.add(controller);
-      _chewieControllers.add(null);
-    }
+    // Load feed data once widget is built
+    Future.microtask(() {
+      final provider = context.read<MyFeedProvider>();
+      provider.loadMyFeeds(
+          widget.token!
+      ); // ✅ Use actual token here
+    });
   }
 
   @override
@@ -60,7 +45,7 @@ class _MyfeedsState extends State<Myfeeds> {
   }
 
   Future<void> _playVideo(int index) async {
-    // stop all other videos
+    // Pause all other videos
     for (int i = 0; i < _videoControllers.length; i++) {
       if (i != index) {
         await _videoControllers[i].pause();
@@ -68,9 +53,7 @@ class _MyfeedsState extends State<Myfeeds> {
       }
     }
 
-    setState(() {
-      _playingIndex = index;
-    });
+    setState(() => _playingIndex = index);
 
     final controller = _videoControllers[index];
     await controller.initialize();
@@ -93,63 +76,145 @@ class _MyfeedsState extends State<Myfeeds> {
     setState(() {});
   }
 
-  String selectedCategory = "Explore";
-
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final myFeedProvider = context.watch<MyFeedProvider>();
 
     return Scaffold(
-      backgroundColor: Colors.black,
-       appBar:  AppBar(
-        backgroundColor: Colors.black,
+      backgroundColor: Color(0xFF131313),
+      appBar: AppBar(
+        backgroundColor: Color(0xFF131313),
         elevation: 0,
         leading: IconButton(
-        icon: Image.asset(
-        "assets/arrow-circle-right.png",
-        width: 25.15,
-        height: 25.15,
-    ),
-    //Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-    onPressed: () => Navigator.pop(context),
-    ),
-    title: Text(
-    'Add Feeds',
-    style: GoogleFonts.montserrat(
-    textStyle: TextStyle(
-    color: Colors.white,
-    fontSize: 16,
-    fontFamily: 'Montserrat',
-    fontWeight: FontWeight.w500,
-    letterSpacing: 0.32,
-    ),
-    ),
-    ),),
+          icon: Image.asset(
+            "assets/arrow-circle-right.png",
+            width: 25.15,
+            height: 25.15,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'My Feeds',
+          style: GoogleFonts.montserrat(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            letterSpacing: 0.32,
+          ),
+        ),
+      ),
+
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
+        child: Builder(
+          builder: (_) {
+            // ✅ Loading State (no spinner)
+            if (myFeedProvider.status == MyFeedStatus.loading) {
+              return Skeletonizer(
+                enabled: true,
+                child: ListView.builder(
+                  itemCount: 3, // number of placeholder cards
+                  itemBuilder: (context, index) {
+                    return Container(
+                      color: const Color(0xFF161616),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const ListTile(
+                            leading: CircleAvatar(radius: 18, backgroundColor: Colors.white24),
+                            title: SizedBox(height: 10, width: 80, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white24))),
+                            subtitle: SizedBox(height: 8, width: 50, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white24))),
+                          ),
+                          const SizedBox(height: 10),
+                          AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: Colors.white24,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 10, width: double.infinity, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white24))),
+                                SizedBox(height: 6),
+                                SizedBox(height: 10, width: 150, child: DecoratedBox(decoration: BoxDecoration(color: Colors.white24))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
 
-              SizedBox(height: size.height * 0.03),
 
-              // Video Feed Posts
-              for (int i = 0; i < posts.length; i++)
-                Container( color: const Color(0xFF161616),
+            // ✅ Error State
+            if (myFeedProvider.status == MyFeedStatus.failure) {
+              print( myFeedProvider.error);
+              return Center(
+                child: Text(
+                  myFeedProvider.error ?? "Failed to load feeds",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              );
+            }
+
+            // ✅ Empty State
+            if (myFeedProvider.entity == null ||
+                myFeedProvider.entity!.results == null ||
+                myFeedProvider.entity!.results!.isEmpty) {
+              return const Center(
+                child: Text(
+                  "No feeds available",
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            }
+
+            // ✅ Success State
+            final posts = myFeedProvider.entity!.results!;
+
+            // Initialize video controllers if not done
+            if (_videoControllers.isEmpty) {
+              for (var post in posts) {
+                final controller = VideoPlayerController.network(post.video ?? "");
+                _videoControllers.add(controller);
+                _chewieControllers.add(null);
+              }
+            }
+
+            // ✅ List with spacing between items
+            return ListView.separated(
+              // padding: const EdgeInsets.symmetric(vertical: 20),
+              separatorBuilder: (_, __) => const SizedBox(height: 5),
+              itemCount: posts.length,
+              itemBuilder: (context, i) {
+                return Container(
+                  color: const Color(0xFF161616),
                   child: _postCard(
                     index: i,
-                    name: posts[i]["name"],
-                    time: posts[i]["time"],
-                    description: posts[i]["description"],
-                    thumbnail: posts[i]["thumbnail"],
+                    name: posts[i].user?.name ?? 'Unknown User',
+                    time: posts[i].createdAt ?? '',
+                    description: posts[i].description ?? '',
+                    thumbnail: posts[i].image ?? '',
+                    userImage: posts[i].user?.image,
                   ),
-                ),
-            ],
-          ),
+                );
+              },
+            );
+          },
         ),
       ),
     );
   }
-
 
   Widget _postCard({
     required int index,
@@ -157,24 +222,31 @@ class _MyfeedsState extends State<Myfeeds> {
     required String time,
     required String description,
     required String thumbnail,
+    String? userImage,
   }) {
     final size = MediaQuery.of(context).size;
-    bool isPlaying =
-        _playingIndex == index && _chewieControllers[index] != null;
+    bool isPlaying = _playingIndex == index && _chewieControllers[index] != null;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
+      padding: const EdgeInsets.only(bottom: 10.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Profile Row
+          SizedBox(height: 10,),
+          // Profile Section
           Padding(
             padding: EdgeInsets.symmetric(horizontal: size.width * 0.05),
             child: Row(
               children: [
-                const CircleAvatar(
+                 CircleAvatar(
                   radius: 18,
-                  backgroundImage: AssetImage("assets/profile.jpg"),
+                  backgroundColor: Colors.grey.shade800,
+                  backgroundImage: (userImage != null && userImage.isNotEmpty)
+                      ? NetworkImage(userImage)
+                      : null, // no image → show icon
+                  child: (userImage == null || userImage.isEmpty)
+                      ? const Icon(Icons.person, color: Colors.white, size: 18)
+                      : null,
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -183,23 +255,18 @@ class _MyfeedsState extends State<Myfeeds> {
                     Text(
                       name,
                       style: GoogleFonts.montserrat(
-                        textStyle: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.13,
-                        ),
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.13,
                       ),
                     ),
                     Text(
                       time,
                       style: GoogleFonts.montserrat(
-                        textStyle: TextStyle(
-                          color: const Color(0xFFD7D7D7),
-                          fontSize: 10,
-                          fontFamily: 'Montserrat',
-                          fontWeight: FontWeight.w400,
-                        ),
+                        color: const Color(0xFFD7D7D7),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
@@ -207,6 +274,7 @@ class _MyfeedsState extends State<Myfeeds> {
               ],
             ),
           ),
+
           const SizedBox(height: 10),
 
           // Video or Thumbnail
@@ -216,8 +284,7 @@ class _MyfeedsState extends State<Myfeeds> {
               aspectRatio: 16 / 9,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child:
-                isPlaying
+                child: isPlaying
                     ? Chewie(controller: _chewieControllers[index]!)
                     : Stack(
                   fit: StackFit.expand,
@@ -236,53 +303,41 @@ class _MyfeedsState extends State<Myfeeds> {
               ),
             ),
           ),
+
           const SizedBox(height: 10),
-          ReadMoreText(
-            description,
-            trimLines: 2,
-            // number of lines to show before "Read more"
-            colorClickableText: Colors.red,
-            trimMode: TrimMode.Line,
-            trimCollapsedText: ' See more',
-            trimExpandedText: ' Read less',
-            style: GoogleFonts.montserrat(
-              textStyle: TextStyle(
+
+          // Description
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: size.width * 0.05),
+            child: ReadMoreText(
+              description,
+              trimLines: 2,
+              colorClickableText: Colors.red,
+              trimMode: TrimMode.Line,
+              trimCollapsedText: ' See more',
+              trimExpandedText: ' Read less',
+              style: GoogleFonts.montserrat(
                 color: const Color(0xFFD5D5D5),
-                fontSize: 12.50,
-                fontFamily: 'Montserrat',
+                fontSize: 12.5,
                 fontWeight: FontWeight.w300,
                 height: 1.84,
                 letterSpacing: 0.25,
               ),
-            ),
-            moreStyle: GoogleFonts.montserrat(
-              textStyle: TextStyle(
+              moreStyle: GoogleFonts.montserrat(
                 color: const Color(0xFFCCCCCC),
-                fontSize: 12.50,
-                fontFamily: 'Montserrat',
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.25,
               ),
-            ),
-            lessStyle: GoogleFonts.montserrat(
-              textStyle: TextStyle(
+              lessStyle: GoogleFonts.montserrat(
                 color: const Color(0xFFCCCCCC),
-                fontSize: 12.50,
-                fontFamily: 'Montserrat',
+                fontSize: 12.5,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.25,
               ),
             ),
           ),
-          SizedBox(height: 10,)
-          // Text(
-          //   description,
-          //   style: const TextStyle(
-          //     color: Colors.grey,
-          //     fontSize: 13,
-          //     height: 1.4,
-          //   ),
-          // ),
+          //const SizedBox(height: 10),
         ],
       ),
     );

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'Ui/splash.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'Ui/myfeeds.dart';
 import 'Ui/feed_create.dart';
 import 'Ui/home_screen.dart';
 import 'Ui/login_screen.dart';
+import 'features/home_main/presentation/providers/home_provider.dart';
+import 'features/my_feeds/presentation/providers/my_feed_provider.dart';
 import 'injection.dart';
 
 void main() {
@@ -16,6 +19,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   final Gateway gateway;
+
   const MyApp({super.key, required this.gateway});
 
   @override
@@ -24,7 +28,18 @@ class MyApp extends StatelessWidget {
       providers: [
         // ✅ inject providers
         ChangeNotifierProvider(create: (_) => AuthProvider(gateway.signIn)),
-       // ChangeNotifierProvider(create: (_) => FeedProvider(gateway.uploadFeed)),
+        ChangeNotifierProvider(
+          create: (_) => HomeProvider(gateway.getHomeData),
+        ),
+        // ✅ MyFeed Provider
+        ChangeNotifierProvider(
+          create:
+              (_) => MyFeedProvider(
+                gateway
+                    .myFeedRepository, // we'll define this next in injection.dart
+              ),
+        ),
+        ChangeNotifierProvider(create: (_) => gateway.createFeedProvider),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -34,13 +49,12 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         // ✅ first screen (your login / mobile number)
-        home: const MobileNumberScreen(),
+        home: const SplashScreen(),
         routes: {
           '/home': (_) => const HomeScreen(),
-          '/feed_create': (_) => const AddFeedsScreen(),
           '/myfeeds': (_) => const Myfeeds(),
         },
       ),
-    );//8129466718
+    ); //8129466718
   }
 }

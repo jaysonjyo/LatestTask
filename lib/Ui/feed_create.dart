@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
@@ -12,7 +13,10 @@ import 'package:path/path.dart';
 import 'package:path/path.dart' as p;
 
 class AddFeedsScreen extends StatefulWidget {
-  const AddFeedsScreen({Key? key}) : super(key: key);
+  final String? token;
+  final List<Map<String, dynamic>> categories;
+
+  const AddFeedsScreen({super.key, this.token, required this.categories});
 
   @override
   State<AddFeedsScreen> createState() => _AddFeedsScreenState();
@@ -22,20 +26,15 @@ class _AddFeedsScreenState extends State<AddFeedsScreen> {
   File? _videoFile;
   File? _thumbnailFile;
   final TextEditingController _descController = TextEditingController();
-  List<int> selectedCategoryIds = [];
+  // List<int> selectedCategoryIds = [];
   bool _isUploading = false;
   double _uploadProgress = 0.0;
   VideoPlayerController? _videoController;
 
   final picker = ImagePicker();
 
-  final List<Map<String, dynamic>> categories = [
-    {"id": 23, "name": "Physics"},
-    {"id": 24, "name": "AI"},
-    {"id": 25, "name": "Mathematics"},
-    {"id": 26, "name": "Chemistry"},
-    {"id": 27, "name": "Micro Biology"},
-  ];
+  List<Map<String, dynamic>> get categories => widget.categories;
+
 
   Future<void> _pickVideo() async {
     final pickedFile = await picker.pickVideo(source: ImageSource.gallery);
@@ -74,81 +73,81 @@ class _AddFeedsScreenState extends State<AddFeedsScreen> {
     }
   }
 
-  Future<void> _uploadFeed() async {
-    if (_videoFile == null ||
-        _thumbnailFile == null ||
-        _descController.text.isEmpty ||
-        selectedCategoryIds.isEmpty) {
-      Fluttertoast.showToast(msg: 'All fields are required');
-      return;
-    }
-
-    setState(() {
-      _isUploading = true;
-      _uploadProgress = 0;
-    });
-
-    try {
-      final uri = Uri.parse(
-        'https://yourapi.com/my_feed',
-      ); // 🔁 Change endpoint
-      final request = http.MultipartRequest('POST', uri);
-
-      // Access token (replace with your stored token logic)
-      final accessToken = 'YOUR_ACCESS_TOKEN_HERE';
-      request.headers['Authorization'] = 'Bearer $accessToken';
-
-      request.fields['desc'] = _descController.text;
-      request.fields['category'] = jsonEncode(selectedCategoryIds);
-
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'video',
-          _videoFile!.path,
-          filename: basename(_videoFile!.path),
-        ),
-      );
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          _thumbnailFile!.path,
-          filename: basename(_thumbnailFile!.path),
-        ),
-      );
-
-      final streamedResponse = await request.send();
-
-      streamedResponse.stream.listen(
-        (value) {
-          setState(() {
-            _uploadProgress +=
-                value.length / (streamedResponse.contentLength ?? 1);
-          });
-        },
-        onDone: () async {
-          final response = await http.Response.fromStream(streamedResponse);
-          setState(() => _isUploading = false);
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            Fluttertoast.showToast(msg: 'Feed uploaded successfully!');
-            // Navigator.pop(context);
-          } else {
-            Fluttertoast.showToast(
-              msg: 'Upload failed: ${response.statusCode}',
-            );
-          }
-        },
-        onError: (e) {
-          setState(() => _isUploading = false);
-          Fluttertoast.showToast(msg: 'Error: $e');
-        },
-        cancelOnError: true,
-      );
-    } catch (e) {
-      setState(() => _isUploading = false);
-      Fluttertoast.showToast(msg: 'Something went wrong');
-    }
-  }
+  // Future<void> _uploadFeed() async {
+  //   if (_videoFile == null ||
+  //       _thumbnailFile == null ||
+  //       _descController.text.isEmpty ||
+  //       selectedCategoryIds.isEmpty) {
+  //     Fluttertoast.showToast(msg: 'All fields are required');
+  //     return;
+  //   }
+  //
+  //   setState(() {
+  //     _isUploading = true;
+  //     _uploadProgress = 0;
+  //   });
+  //
+  //   try {
+  //     final uri = Uri.parse(
+  //       'https://yourapi.com/my_feed',
+  //     ); // 🔁 Change endpoint
+  //     final request = http.MultipartRequest('POST', uri);
+  //
+  //     // Access token (replace with your stored token logic)
+  //     final accessToken = 'YOUR_ACCESS_TOKEN_HERE';
+  //     request.headers['Authorization'] = 'Bearer $accessToken';
+  //
+  //     request.fields['desc'] = _descController.text;
+  //     request.fields['category'] = jsonEncode(selectedCategoryIds);
+  //
+  //     request.files.add(
+  //       await http.MultipartFile.fromPath(
+  //         'video',
+  //         _videoFile!.path,
+  //         filename: basename(_videoFile!.path),
+  //       ),
+  //     );
+  //     request.files.add(
+  //       await http.MultipartFile.fromPath(
+  //         'image',
+  //         _thumbnailFile!.path,
+  //         filename: basename(_thumbnailFile!.path),
+  //       ),
+  //     );
+  //
+  //     final streamedResponse = await request.send();
+  //
+  //     streamedResponse.stream.listen(
+  //       (value) {
+  //         setState(() {
+  //           _uploadProgress +=
+  //               value.length / (streamedResponse.contentLength ?? 1);
+  //         });
+  //       },
+  //       onDone: () async {
+  //         final response = await http.Response.fromStream(streamedResponse);
+  //         setState(() => _isUploading = false);
+  //
+  //         if (response.statusCode == 200 || response.statusCode == 201) {
+  //           Fluttertoast.showToast(msg: 'Feed uploaded successfully!');
+  //           // Navigator.pop(context);
+  //         } else {
+  //           Fluttertoast.showToast(
+  //             msg: 'Upload failed: ${response.statusCode}',
+  //           );
+  //         }
+  //       },
+  //       onError: (e) {
+  //         setState(() => _isUploading = false);
+  //         Fluttertoast.showToast(msg: 'Error: $e');
+  //       },
+  //       cancelOnError: true,
+  //     );
+  //   } catch (e) {
+  //     setState(() => _isUploading = false);
+  //     Fluttertoast.showToast(msg: 'Something went wrong');
+  //   }
+  // }
 
   bool _isEditing = false;
   String _description = "";
@@ -158,6 +157,7 @@ class _AddFeedsScreenState extends State<AddFeedsScreen> {
     _descController.dispose();
     super.dispose();
   }
+  List<String> selectedCategoryIds = [];
 
   void _startEditing() {
     setState(() {
@@ -174,6 +174,104 @@ class _AddFeedsScreenState extends State<AddFeedsScreen> {
   }
 
   bool _showAllCategories = false;
+
+  Future<void> _uploadFeed() async {
+    if (_videoFile == null ||
+        _thumbnailFile == null ||
+        _descController.text.isEmpty ||
+        selectedCategoryIds.isEmpty) {
+      Fluttertoast.showToast(msg: 'All fields are required');
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+      _uploadProgress = 0;
+    });
+
+    try {
+      final uri = Uri.parse('https://frijo.noviindus.in/api/my_feed');
+      final request = http.MultipartRequest('POST', uri);
+
+      final accessToken = widget.token ?? 'YOUR_ACCESS_TOKEN';
+      request.headers['Authorization'] = 'Bearer $accessToken';
+
+      request.fields['desc'] = _descController.text;
+      request.fields['category'] = jsonEncode(selectedCategoryIds);
+
+      // 🔹 Initialize progress tracking variables HERE (outside stream)
+      int bytesSent = 0;
+      final videoLength = await _videoFile!.length();
+      final imageLength = await _thumbnailFile!.length();
+      final totalBytes = videoLength + imageLength;
+
+      // 🔹 Wrap video file stream
+      final videoStream = http.ByteStream(
+        _videoFile!.openRead().transform(
+          StreamTransformer.fromHandlers(
+            handleData: (data, sink) {
+              bytesSent += data.length;
+              setState(() {
+                _uploadProgress = bytesSent / totalBytes;
+              });
+              sink.add(data);
+            },
+          ),
+        ),
+      );
+
+      // 🔹 Add files to the request
+      request.files.add(http.MultipartFile(
+        'video',
+        videoStream,
+        videoLength,
+        filename: basename(_videoFile!.path),
+      ));
+
+      // Add image normally (not tracked)
+      request.files.add(await http.MultipartFile.fromPath(
+        'image',
+        _thumbnailFile!.path,
+        filename: basename(_thumbnailFile!.path),
+      ));
+
+      // 🔹 Send request
+      final response = await request.send();
+      setState(() => _isUploading = false);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Fluttertoast.showToast(msg: 'Feed uploaded successfully!');
+        setState(() {
+          _videoFile = null;
+          _thumbnailFile = null;
+          _descController.clear();
+          selectedCategoryIds.clear();
+          _uploadProgress = 0;
+        });
+      } if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 202) {
+        Fluttertoast.showToast(msg: 'Feed uploaded successfully!');
+        setState(() {
+          _videoFile = null;
+          _thumbnailFile = null;
+          _descController.clear();
+          selectedCategoryIds.clear();
+          _uploadProgress = 0;
+        });
+        // Future.delayed(const Duration(milliseconds: 800), () {
+        //   if (mounted) Navigator.pop(context as BuildContext);
+        // });
+        // ✅ Give a small delay so toast is visible before closing
+
+      } else {
+        Fluttertoast.showToast(msg: 'Upload failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      setState(() => _isUploading = false);
+      Fluttertoast.showToast(msg: 'Something went wrong: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -516,76 +614,160 @@ class _AddFeedsScreenState extends State<AddFeedsScreen> {
             ),
 
             SizedBox(height: size.height * 0.02),
+            if (categories.isEmpty)
+              Center(
+                child: Text(
+                  'No categories available',
+                  style: GoogleFonts.montserrat(color: Colors.white54),
+                ),
+              ),
 
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                // ✅ show only 3 or all based on toggle
-                ...(_showAllCategories ? categories : categories.take(3)).map((
-                  cat,
-                ) {
-                  final selected = selectedCategoryIds.contains(cat['id']);
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        if (selected) {
-                          selectedCategoryIds.remove(cat['id']);
-                        } else {
-                          selectedCategoryIds.add(cat['id']);
-                        }
-                      });
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color:
-                              selected
-                                  ? const Color(0x66C60000)
-                                  : const Color(0x66C60000),
-                          width: 0.63,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ...(_showAllCategories ? categories : categories.take(2)).map((cat) {
+                final id = cat['id'].toString(); // ✅ Use string IDs for uniqueness
+                final selected = selectedCategoryIds.contains(id);
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (selected) {
+                        selectedCategoryIds.remove(id);
+                      } else {
+                        selectedCategoryIds.add(id);
+                      }
+                    });
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: const Color(0x66C60000),
+                        width: 0.63,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      color: selected ? const Color(0x33C60000) : Colors.transparent,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Text(
+                      cat['name'] ?? '',
+                      style: GoogleFonts.montserrat(
+                        textStyle: TextStyle(
+                          color: selected ? Colors.white : Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          height: 1.89,
+                          letterSpacing: 0.20,
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        color:
-                            selected ? Color(0x33C60000) : Colors.transparent,
                       ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                    ),
+                  ),
+                );
+              }),
+
+            ]
+
+          ),
+
+
+            // Wrap(
+            //   spacing: 8,
+            //   runSpacing: 8,
+            //   children: [
+            //     // ✅ show only 3 or all based on toggle
+            //     ...(_showAllCategories ? categories : categories.take(3)).map((
+            //       cat,
+            //     ) {
+            //       final selected = selectedCategoryIds.contains(cat['id']);
+            //       return GestureDetector(
+            //         onTap: () {
+            //           setState(() {
+            //             if (selected) {
+            //               selectedCategoryIds.remove(cat['id']);
+            //             } else {
+            //               selectedCategoryIds.add(cat['id']);
+            //             }
+            //           });
+            //         },
+            //         child: Container(
+            //           decoration: BoxDecoration(
+            //             border: Border.all(
+            //               color:
+            //                   selected
+            //                       ? const Color(0x66C60000)
+            //                       : const Color(0x66C60000),
+            //               width: 0.63,
+            //             ),
+            //             borderRadius: BorderRadius.circular(20),
+            //             color:
+            //                 selected ? Color(0x33C60000) : Colors.transparent,
+            //           ),
+            //           padding: const EdgeInsets.symmetric(
+            //             horizontal: 12,
+            //             vertical: 6,
+            //           ),
+            //           child: Text(
+            //             cat['name'],
+            //             style: GoogleFonts.montserrat(
+            //               textStyle: TextStyle(
+            //                 color: selected ? Colors.white : Colors.white70,
+            //                 fontSize: 12,
+            //                 fontWeight: FontWeight.w400,
+            //                 height: 1.89,
+            //                 letterSpacing: 0.20,
+            //               ),
+            //             ),
+            //           ),
+            //         ),
+            //       );
+            //     }),
+            //   ],
+            // ),
+
+            if (_isUploading)
+              Padding(
+                padding: const EdgeInsets.only(top: 25),
+                child: Column(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 400),
+                      curve: Curves.easeInOut,
+                      height: 10,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(
-                        cat['name'],
-                        style: GoogleFonts.montserrat(
-                          textStyle: TextStyle(
-                            color: selected ? Colors.white : Colors.white70,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            height: 1.89,
-                            letterSpacing: 0.20,
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: _uploadProgress,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFC60000), Color(0xFFFF5A5A)],
+                            ),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
                       ),
                     ),
-                  );
-                }),
-              ],
-            ),
-
-            if (_isUploading)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Column(
-                  children: [
-                    LinearProgressIndicator(value: _uploadProgress),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Text(
                       "Uploading ${(100 * _uploadProgress).toStringAsFixed(1)}%",
                       style: GoogleFonts.montserrat(
-                        textStyle: TextStyle(color: Colors.white54)),
+                        textStyle: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const SpinKitThreeBounce(
+                      color: Colors.redAccent,
+                      size: 20,
                     ),
                   ],
                 ),
               ),
+
 
             const SizedBox(height: 50),
           ],

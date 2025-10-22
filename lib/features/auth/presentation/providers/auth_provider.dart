@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-
 import '../../../../core/error/failures.dart';
 import '../../domain/entities/auth_entity.dart';
 import '../../domain/usecases/sign_in.dart';
@@ -13,19 +12,23 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus status = AuthStatus.idle;
   AuthEntity? user;
   Failure? failure;
+  String? token; // ✅ add this to store access token
 
   Future<void> signIn(String code, String phone) async {
     status = AuthStatus.loading;
     notifyListeners();
 
     final result = await signInUC(countryCode: code, phone: phone);
+
     if (result.isRight) {
       user = result.right;
+      token = user?.accessToken; // ✅ safely extract token from entity
       status = AuthStatus.success;
     } else {
       failure = result.left;
       status = AuthStatus.failure;
     }
+
     notifyListeners();
   }
 }

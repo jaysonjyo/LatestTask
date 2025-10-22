@@ -45,6 +45,9 @@ dependencies:
   bloc: ^9.1.0
   readmore: ^3.0.0
   dio: ^5.9.0
+  shared_preferences: ^2.5.3
+  skeletonizer: ^1.4.3
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
